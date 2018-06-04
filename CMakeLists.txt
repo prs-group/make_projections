@@ -91,19 +91,18 @@ ExternalProject_Add(yaml-cpp-project
 	CMAKE_ARGS ${YAML_CMAKE_ARGS})
 
 ExternalProject_Get_Property(yaml-cpp-project install_dir)
-include_directories(${install_dir}/include)
 
      
 
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Boost 1.49.0 REQUIRED COMPONENTS regex filesystem system program_options)
-find_package(Curses REQUIRED)
+find_package(Curses)
 
 
-include_directories(${Boost_INCLUDE_DIR} ${CURSES_INCLUDE_PATH} 
+include_directories(${Boost_INCLUDE_DIR} 
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}
-    ${CMAKE_SOURCE_DIR}/yaml-lib/include)
+    ${CMAKE_BINARY_DIR}/external/include)
 
 
 set(SOURCE
@@ -129,6 +128,7 @@ if(WITH_NCURSES)
         	${CURSESM}
         	${CURSESP}
         	)
+		include_directories(${CURSES_INCLUDE_PATH})
 	find_path(CURSES_CPP_H cursesapp.h cursesf.h cursesw.h cursesm.h)
     	if(DEFINED ${CURSES_CPP_H}})
     		message(WARNING "NCurses c++ bindings not found! NCurses will be disabled!")
