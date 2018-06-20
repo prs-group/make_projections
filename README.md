@@ -1,5 +1,5 @@
 # make_projections
-This helper tool of TUNNEX is an interface to Gaussian09/16 to facilitate the projected frequency computation from IRC forward and reverse output files.
+This helper tool of a TUNNEX is an interface to Gaussian09/16 to facilitate the projected frequency computation from IRC forward and reverse output files.
 
 ## How to use
 
@@ -20,7 +20,7 @@ We recommend to use the following Keywords:
 
 ### Features ###
 
-- Exract and combine IRC forward and reverse path into textfile (default).
+- Extract and combine IRC forward and reverse path into a text file (default).
 - Generate projected frequency computation from IRC path. (default)
 - Generate execution script for projected frequency computation (-e/--execute flag)
 - Extract zero-point energies from projected frequency computation and combine them with the reaction coordinate. (-g/--harvest flag)
@@ -61,7 +61,7 @@ After compilation just enter:
 make install
 ```
 
-Please make sure the CMAKE_INSTALL_PREFIX/etc directory exists before running make_projections for the first time. Make_projections will ask you for the default gaussian submit command where %s is replaced by the job input name. The user is then for the default file extension of the gaussian output file. A config file is then created in CMAKE_INSTALL_PREFIX/etc/config.yml
+Please make sure the CMAKE_INSTALL_PREFIX/etc directory exists before running make_projection for the first time. Make_projection will ask you for the default gaussian submit command where %s is replaced by the job input name. The user is then for the default file extension of the gaussian output file. A config file is then created in CMAKE_INSTALL_PREFIX/etc/config.yml
 
 If you want to compute high level single points you should edit the config.yml file. The syntax for the generation of input file and the extraction of the energy is described in the config file.
 
