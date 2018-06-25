@@ -22,7 +22,8 @@
 
 using namespace regex;
 
-boost::regex gaussian::atomicSymbols(R"(^\s+(\w+)(\(iso=\d+\))?)",
+boost::regex gaussian::atomicSymbols(
+		R"(^\s+(?!Charge)(?!Symbolic)(\w+)(\(iso=\d+\))?)",
 		boost::regex::perl | boost::regex::icase);
 
 boost::regex gaussian::scfEnergy(R"(^\s+SCF Done:\s+E\(\w+\)\s+=\s+([+-]?\d+\.?\d+))");
@@ -38,3 +39,4 @@ boost::regex gaussian::reactionCoord("^\\s+NET REACTION COORDINATE UP TO THIS PO
                             "\\s+=\\s+([+-]?\\d+\\.?\\d+)");
 
 boost::regex gaussian::pointNumber("^\\s+Point Number:\\s+(\\d+)\\s+Path Number:\\s+(\\d+)");
+
