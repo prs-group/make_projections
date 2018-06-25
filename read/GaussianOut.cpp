@@ -206,16 +206,16 @@ void GaussianOut::readInitialGeom(){
             line.find("cartesian coordinates used") != string::npos) {
             startReading=true;
         }
-        
+
         if (startReading) {
             if (line.empty())
                 break;
-            
-            this->initialGeom.append(line+"\n");
+
+			this->initialGeom.append(line + "\n");
         }
     }
     if(initialGeom.empty())
-        throw fatalGaussianError("Could not read inititial Geometry");
+		throw fatalGaussianError("Could not read initial Geometry");
     size_t firstNewline=initialGeom.find("\n") + 1;
     initialGeom.erase(0, firstNewline);
 //    cout << initialGeom << endl;
