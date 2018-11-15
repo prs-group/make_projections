@@ -87,7 +87,7 @@ bool GaussianOut::init(const char* filename){
         do {
             string sub;
             iss >> sub;
-            if (sub.length() != 2) { //Exclude #p and so on
+            if (sub.length() > 2) { //Exclude #p and so on
                 if (!foundCalcMethod) { //Uses the fact, that the calcmethod is first in line
                     this->calcMethod = sub;
                     foundCalcMethod=true;
