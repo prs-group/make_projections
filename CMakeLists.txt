@@ -29,6 +29,7 @@ list(APPEND CMAKE_MODULE_PATH
 # Options
 option(USE_STRING_HACKS "Use string hacks" ON)
 option(WITH_NCURSES "Compile with ncurses library for GUI support" OFF)
+option(WITH_SYSTEM_BOOST "Compile with system boost" OFF)
 
 INCLUDE(CheckCXXSymbolExists)
 INCLUDE(ExternalProject)
@@ -92,11 +93,79 @@ ExternalProject_Add(yaml-cpp-project
 
 ExternalProject_Get_Property(yaml-cpp-project install_dir)
 
-     
+# --------------------------------------------------------------------
+# Build the boost as external project when needed
+# --------------------------------------------------------------------
 
-set(CURSES_NEED_NCURSES TRUE)
-find_package(Boost 1.49.0 REQUIRED COMPONENTS regex filesystem system program_options)
-find_package(Curses)
+if(WITH_SYSTEM_BOOST)
+	find_package(Boost 1.49.0 
+		REQUIRED COMPONENTS 
+		regex filesystem system program_options)
+else()
+	# Detect the toolset for boost
+	if(CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+		set(TOOLSET "clang")
+	elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+		set(TOOLSET "intel")
+	elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+		set(TOOLSET "msvc")
+	elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+		set(TOOLSET "gcc")
+	else()
+		MESSAGE(ERROR "Cannot build boost. Your Compiler is not supported")
+
+	endif()
+	set(BOOST_MAJOR "1")
+	set(BOOST_MINOR "55")
+	set(BOOST_PATCH "0")
+	string(CONCAT BOOST_URL "https://sourceforge.net/"
+		"projects/boost/files/boost/"
+		"${BOOST_MAJOR}.${BOOST_MINOR}.${BOOST_PATCH}/"
+		"boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_PATCH}"
+		".tar.bz2/download")
+
+	string(CONCAT CONFIG_CMD "./bootstrap.sh;"
+		"--with-libraries=regex,"
+		"program_options,"
+		"filesystem,"
+		"system")
+
+	string(CONCAT BUILD_CMD "./b2;install;link=static;"
+			"toolset=${TOOLSET};"
+			"cxxflags=${CMAKE_CXX_FLAGS};"
+			"--prefix=${CMAKE_BINARY_DIR}/external"
+			)
+
+	ExternalProject_Add( ep_boost
+	URL ${BOOST_URL}
+	URL_MD5 d6eef4b4cacb2183f2bf265a5a03a354
+	CONFIGURE_COMMAND ${CONFIG_CMD}
+	BUILD_COMMAND ${BUILD_CMD}
+	BUILD_IN_SOURCE 1
+	INSTALL_COMMAND "")
+	set(install_dir "${CMAKE_BINARY_DIR}/external")
+	set(Boost_INCLUDE_DIR "${install_dir}/include")
+	function(addBoostLib basenameBoostLib)
+		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+		string(CONCAT LIBNAME "${install_dir}"
+			"${CMAKE_STATIC_LIBRARY_PREFIX}"
+			"${basenameBoostLib}"
+			"${CMAKE_STATIC_LIBRARY_SUFFIX}")
+		else()
+		string(CONCAT LIBNAME "${install_dir}"
+			"/lib/"
+			"${CMAKE_STATIC_LIBRARY_PREFIX}"
+			"${basenameBoostLib}"
+			"${CMAKE_STATIC_LIBRARY_SUFFIX}")
+		endif()
+		list(APPEND Boost_LIBRARIES ${LIBNAME})
+		set(Boost_LIBRARIES "${Boost_LIBRARIES}" PARENT_SCOPE)
+	endfunction()
+	addBoostLib(boost_regex)
+	addBoostLib(boost_program_options)
+	addBoostLib(boost_filesystem)
+	addBoostLib(boost_system)
+endif(WITH_SYSTEM_BOOST)
 
 
 include_directories(${Boost_INCLUDE_DIR} 
@@ -114,6 +183,8 @@ set(SOURCE
 # Ncurses is configured here
 # --------------------------------------------------------------------
 if(WITH_NCURSES)
+	set(CURSES_NEED_NCURSES TRUE)
+	find_package(Curses)
 	set(HAVE_NCURSES_H OFF)
 
 	if(CURSES_FOUND)
@@ -187,13 +258,18 @@ configure_file(
   
 
 set(CORELIBS ${CURSES_LIBRARIES} ${Boost_LIBRARIES})
-set(yaml-cpp-lib ${CMAKE_BINARY_DIR}/external/lib/libyaml-cpp${CMAKE_STATIC_LIBRARY_SUFFIX})
+string(CONCAT yaml-cpp-lib "${CMAKE_BINARY_DIR}/external/lib/"
+	"${CMAKE_STATIC_LIBRARY_PREFIX}yaml-cpp${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_executable(make_projection ${SOURCE} ${HEADERS})
 add_executable(make_projection_test ${SOURCE} ${HEADERS})
 SET_TARGET_PROPERTIES(make_projection_test PROPERTIES COMPILE_FLAGS "-DTEST")
 add_dependencies(make_projection yaml-cpp-project)
 add_dependencies(make_projection_test yaml-cpp-project)
+if(NOT WITH_SYSTEM_BOOST)
+	add_dependencies(make_projection ep_boost)
+	add_dependencies(make_projection_test ep_boost)
+endif()
 target_link_libraries(make_projection ${yaml-cpp-lib} ${CORELIBS})
 target_link_libraries(make_projection_test ${yaml-cpp-lib} ${CORELIBS})
 INSTALL(TARGETS make_projection
