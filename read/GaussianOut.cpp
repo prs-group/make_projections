@@ -133,43 +133,36 @@ bool GaussianOut::init(const char* filename){
         
         //Getting the jobname
         
-        // This works, because find() finds the first occurrence of "9=1/99;"
-        
+        // The jobname is enclosed by "-"
+        // Before the jobname the method line is enclosed by "-"
+        // So, count up to 5 to get the jobname
+        // The jobname can also be multiline so stop parsing after 4
+
+        jobname="";
         stringstream content(contentOfFile);
         const boost::regex l(R"(\s+[-]+)");
         int counter=0;
         constexpr int stop=5;
-        char *line=new char[200];
-        while( content.getline(line,200)){
-            if (counter==stop) {
-                jobname=line;
-                break;
-            }
-            if (boost::regex_match(line,l))
+        char *line=new char[1000];
+        bool startParsing=false;
+        while( content.getline(line,1000)){
+            if (boost::regex_match(line,l)){
                 counter++;
-        }
-       /*
-        size_t posBegOfJobname = contentOfFile.find("9=1/99;");
-        size_t posEndOfJobname = contentOfFile.find("Symbolic Z-matrix:");
-        
-        if (posBegOfJobname == string::npos || posEndOfJobname == string::npos) {
-            throw fatalGaussianError("Sorry an internal error occured during read process of the jobname");
-            return false;
-        }
-        
-        stringstream newiss(contentOfFile.substr(posBegOfJobname,posEndOfJobname-posBegOfJobname));
-        char* buf = new char[posEndOfJobname-posBegOfJobname];
-        int i = 0;
-        
-        
-        while (newiss.getline(buf, posEndOfJobname-posBegOfJobname)) {
-            i++;
-            if (i == 4) {
-                jobname = buf;
+                if(counter==stop)
+                    startParsing=true;
+                continue;
+            } else {
+                if(counter==stop+1)
+                    break;
             }
+
+
+            if (startParsing) {
+                jobname+=line;
+            }
+
         }
-        
-        delete [] buf;*/
+
         this->readInitialGeom();
         delete [] line;
         
